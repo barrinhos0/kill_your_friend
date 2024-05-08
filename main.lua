@@ -1,22 +1,22 @@
--- Define as variáveis locais
 local jogador = {}
-local fundo
-local fundo_quad
+local anim8 = require("bibliotecas/anim8")
+local sti = require("bibliotecas/sti")
+local mapaDoJogo = sti("mapas/mapa.lua")
+local camera = require("bibliotecas/camera")
+local cam = camera()
+-- local fundo
+-- local fundo_quad
 
--- Função chamada quando o Love2D é inicializado
 function love.load()
-    local anim8 = require("bibliotecas/anim8")
     love.graphics.setDefaultFilter("nearest", "nearest")
 
-    -- Define as propriedades do jogador
     jogador.x = 0
     jogador.y = 0
     jogador.velo = 3
 
-    jogador.spritesheet = love.graphics.newImage("sprites/jogador.png")
+    jogador.spritesheet = love.graphics.newImage("sprites/personagens/jogador.png")
     jogador.grid = anim8.newGrid(48, 48, jogador.spritesheet:getWidth(), jogador.spritesheet:getHeight())
 
-    -- Define as animações do jogador
     jogador.animacoes = {}
     jogador.animacoes.cima = anim8.newAnimation(jogador.grid("1-6", 6), 0.1)
     jogador.animacoes.esquerda = anim8.newAnimation(jogador.grid("1-6", 5), 0.1):flipH()
@@ -30,12 +30,11 @@ function love.load()
 
     jogador.anim = jogador.animacoes.parado_baixo
 
-    fundo = love.graphics.newImage("sprites/grama.png")
-    fundo:setWrap("repeat", "repeat")
-    fundo_quad = love.graphics.newQuad(0, 0, love.graphics.getDimensions(), love.graphics.getDimensions(), fundo:getWidth(), fundo:getHeight())
+    -- fundo = love.graphics.newImage("sprites/tiles/grama.png")
+    -- fundo:setWrap("repeat", "repeat")
+    -- fundo_quad = love.graphics.newQuad(0, 0, love.graphics.getDimensions(), love.graphics.getDimensions(), fundo:getWidth(), fundo:getHeight())
 end
 
--- Função chamada para atualizar o estado do jogo
 function love.update(dt)
     if love.keyboard.isDown("w") then
         jogador.y = jogador.y - jogador.velo
@@ -57,7 +56,6 @@ function love.update(dt)
         jogador.anim = jogador.animacoes.baixo
     end
 
-    -- Função chamada quando uma tecla é solta
     function love.keyreleased(key)
         if key == "w" then
             jogador.anim = jogador.animacoes.parado_cima
@@ -70,13 +68,20 @@ function love.update(dt)
         end
     end
 
-    -- Atualiza a animação do jogador
     jogador.anim:update(dt)
+    cam:lookAt(jogador.x, jogador.y)
 end
 
--- Função chamada para desenhar o jogo
 function love.draw()
-    love.graphics.draw(fundo, fundo_quad, 0, 0)
-    jogador.anim:draw(jogador.spritesheet, jogador.x, jogador.y, nil, 5, 5)
-    love.graphics.print("X: " .. jogador.x .. " Y: " .. jogador.y, 10, 10)
+    -- Feedback da posição do jogador
+    local camX, camY = cam:position()
+    local feedbackX = camX - 24
+    local feedbackY = camY - 24
+
+    cam:attach()
+        mapaDoJogo:drawLayer(mapaDoJogo.layers["Chão"])
+        mapaDoJogo:drawLayer(mapaDoJogo.layers["Montanhas"])
+        jogador.anim:draw(jogador.spritesheet, jogador.x, jogador.y, nil, nil, nil, 24, 24)
+        love.graphics.print("X: " .. jogador.x .. " Y: " .. jogador.y, feedbackX, feedbackY)
+    cam:detach()
 end
